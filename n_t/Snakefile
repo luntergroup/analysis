@@ -23,6 +23,8 @@ import smc
 import msmc
 import simulations
 import plots
+import smcsmc
+import smcsmc.utils
 
 
 # ###############################################################################
@@ -40,16 +42,31 @@ seed = 12345
 np.random.seed(seed)
 
 # This is the number of samples to simulate for each analysis
-num_sampled_genomes_per_replicate = 20
+num_sampled_genomes_per_replicate = 4
 
 # Here is a list of sample sizes to run msmc on. 
 # Each element counts as its own analysis
 # so there will be "replicates" runs for each size
+#
+# and a similar setup for SMCSMC
 num_sampled_genomes_msmc = [8,4]
+num_sampled_genomes_smcsmc = [4]
 
 # The number of msmc Baumwelch(?) iterations to run,
 # typically 20
+#
+# And again, similar for SMCSMC. Number of stochastic EM iterations.
+# 15 is typical, but more is good too. Assess for convergence based on 
+# rainbow plots.
 num_msmc_iterations = 20
+num_smcsmc_iterations=15
+
+# Number of particles to use for SMCSMC
+# 
+# A good starting point is 50k, and see if reducing 
+# significantly impacts the estimates that you are
+# recieveing. 
+num_smcsmc_particles = 10
 
 # The number of replicates of each analysis you would like to run
 replicates = 2
@@ -258,6 +275,76 @@ rule compound_msmc:
     output: output_dir+"/msmc_estimated_Ne.png"
     run: plots.plot_compound_msmc(input, output[0])
 
+
+# ###############################################################################
+#  SMCSMC
+# ###############################################################################
+
+# NOTE: I am just using *one* sample in the list for now. I will figure out how to expand it out
+# 		once this is actually working.
+
+# Some SMCSMC specific parameters
+# 	This dictionary gets converted to a list which is 
+# 	analagous to inputting these on the command line to 
+# 	smcsmc.py, so use the exact same keys. Please see the documentation
+#	for details on these flags.
+#
+#	Anything which has the value True will be included as a boolean
+#	and the True will be stripped, leaving just the key as the input.
+#	False will be removed.
+#
+# TODO: Make this cleaner, and don't have to process the whole
+# 		thing as if it is input arguements.
+
+args = smcsmc.utils.dict_to_args({	
+	'EM': 				num_smcsmc_iterations,
+	'Np': 				num_smcsmc_particles,
+	
+	# Submission Parameters
+	'chunks': 			100,
+	'no_infer_recomb': 	'',
+
+	# Other inference parameters
+	'mu': 				species.genome.mean_mutation_rate,
+	'rho':				3e-9,
+	'calibrate_lag':	1.0,
+	'tmax':				3.5,
+	'alpha': 			0,
+	'apf': 				2,
+	'P': 				'133 133016 31*1',
+	'VB':				'',
+	'nsam':				4, 				# This will need to be changed....
+	
+	# Migration parameters
+	'I':				None,
+	'ej':				None,
+	'eM':				None,
+
+	# ARG Inference
+	'arg':				None			# Dont need this for now
+})
+
+rule ts_to_seg:
+	input: rules.simulation.output
+	output: output_dir + "/{seeds}/{chrms}.trees.seg"
+	run: smcsmc.utils.ts_to_seg(input[0], num_sampled_genomes_smcsmc)
+
+rule run_smcsmc:
+	input:
+		expand(output_dir + "/{seeds}/{chrms}.trees.seg",
+			chrms=chrm_list, seeds=seed_array)
+	output: 
+		expand(output_dir + "/{seeds}/chunkfinal.out",
+			seeds=seed_array)
+	run: 
+		inputs = expand(output_dir + "/{seeds}/*.trees.seg",
+			seeds=wildcards.seeds)
+		input_file_string = " ".join(inputs)
+		output_file_string = output_dir 
+		#args = smcsmc.utils.dict_to_args(smcsmc_params)
+		#args['segs'] = input_file_string
+		#args['o'] = output_file_string
+		smcsmc.utils.run_smcsmc(args)	
 
 # ###############################################################################
 # 
