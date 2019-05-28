@@ -316,20 +316,20 @@ rule compound_msmc:
 
 rule ts_to_seg:
 	input: rules.simulation.output
-	output: output_dir + "/{seeds}/{samps}.{chrms}.trees.seg"
+	output: output_dir + "/Intermediate/{seeds}/{samps}.{chrms}.trees.seg"
 	run: smcsmc.utils.ts_to_seg(input[0], num_sampled_genomes_smcsmc)
 
-# fuck it im going to hardcode it now
 rule run_smcsmc:
 	input:	
-		expand(output_dir + "/{seeds}/{samps}.{chrms}.trees.seg",
-        		chrms=chrm_list, seeds=seed_array, samps=num_sampled_genomes_msmc)
+		expand(output_dir + "/Intermediate/{seeds}/{samps}.{chrms}.trees.seg",
+        		chrms=chrm_list, seeds=seed_array, samps=num_sampled_genomes_smcsmc)
 	output: 
-		output_dir + "/{seeds}/{samps}.result.out"
+		output_dir + "/Intermediate/{seeds}/{samps}.run/result.out"
 	run: 
-		inputs = "/{seeds}/{samps}.{chrms}.trees.seg"
+		inputs = expand(output_dir+"/Intermediate/{seeds}/{samps}.{chrms}.trees.seg", 
+			seeds=wildcards.seeds, samps=wildcards.samps, chrms=chrm_list)
 		input_file_string = " ".join(inputs)
-		input_file_string = inputs
+		#input_file_string = inputs
 		args = {	
 		'EM': 				str(num_smcsmc_iterations),
 		'Np': 				str(num_smcsmc_particles),
@@ -362,26 +362,24 @@ rule run_smcsmc:
 		}
 		#output_file_string = output_dir 
 		#args = smcsmc.utils.dict_to_args(smcsmc_params)
-		args['seg'] = output_dir + input_file_string
-		args['o'] = output_dir
+		args['o'] = output_dir + f"/Intermediate/{wildcards.seeds}/{wildcards.samps}.run"
+		args['segs'] = input_file_string
 		args = smcsmc.utils.dict_to_args(args)
 		smcsmc.utils.run_smcsmc(args)	
 
 rule convert_smcsmc:
     input: rules.run_smcsmc.output
-    output: output_dir + "/{seeds}/{samps}.results.out.csv"
-    run: smcsmc.utils.convert_smcsmc_output(input[0], output[0], generation_time = 10)
+    output: output_dir + "/Results/{seeds}/{samps}.run/results.out.csv"
+    run: smcsmc.utils.convert_smcsmc_output(input[0], output[0], generation_time, num_smcsmc_iterations)
 
 
 def ne_files_smcsmc(wildcards):
-    return expand(output_dir + "/{seeds}/{samps}.results.out.csv",
+    return expand(output_dir + "/Results/{seeds}/{samps}.run/results.out.csv",
             seeds=seed_array,samps=num_sampled_genomes_smcsmc)
-
-
 
 rule compound_smcsmc:
     input: ne_files_smcsmc
-    output: output_dir+"/smcsmc_estimated_Ne.png"
+    output: output_dir+"/Results/smcsmc_estimated_Ne.png"
     run: plots.plot_compound_msmc(input, output[0])
 
 
