@@ -59,7 +59,7 @@ num_sampled_genomes_smcsmc = [4]
 # 15 is typical, but more is good too. Assess for convergence based on 
 # rainbow plots.
 num_msmc_iterations = 20
-num_smcsmc_iterations=15
+num_smcsmc_iterations=0
 
 # Number of particles to use for SMCSMC
 # 
@@ -94,7 +94,8 @@ chrm_list = [chrom for chrom in species.genome.chromosomes][:2]
 # ###############################################################################
 
 
-seed_array = np.random.random_integers(1,2**31,replicates)
+#seed_array = np.random.random_integers(1,2**31,replicates)
+seed_array=np.array([1675701734])
 genetic_map_downloaded_flag= ".genetic_map_downloaded"
 msmc_exec = "../extern/msmc/build/msmc"
 stairwayplot_code = "stairwayplot/swarmops.jar"
@@ -296,54 +297,58 @@ rule compound_msmc:
 # TODO: Make this cleaner, and don't have to process the whole
 # 		thing as if it is input arguements.
 
-args = smcsmc.utils.dict_to_args({	
-	'EM': 				num_smcsmc_iterations,
-	'Np': 				num_smcsmc_particles,
-	
-	# Submission Parameters
-	'chunks': 			100,
-	'no_infer_recomb': 	'',
 
-	# Other inference parameters
-	'mu': 				species.genome.mean_mutation_rate,
-	'rho':				3e-9,
-	'calibrate_lag':	1.0,
-	'tmax':				3.5,
-	'alpha': 			0,
-	'apf': 				2,
-	'P': 				'133 133016 31*1',
-	'VB':				'',
-	'nsam':				4, 				# This will need to be changed....
-	
-	# Migration parameters
-	'I':				None,
-	'ej':				None,
-	'eM':				None,
-
-	# ARG Inference
-	'arg':				None			# Dont need this for now
-})
 
 rule ts_to_seg:
 	input: rules.simulation.output
-	output: output_dir + "/{seeds}/{chrms}.trees.seg"
+	output: expand(output_dir + "/{seeds}/{chrms}.trees.seg", chrms=chrm_list, seeds=seed_array)
 	run: smcsmc.utils.ts_to_seg(input[0], num_sampled_genomes_smcsmc)
 
+# fuck it im going to hardcode it now
 rule run_smcsmc:
 	input:
-		expand(output_dir + "/{seeds}/{chrms}.trees.seg",
-			chrms=chrm_list, seeds=seed_array)
+		output_dir + "/1675701734/4.chr2L.trees.seg"
 	output: 
-		expand(output_dir + "/{seeds}/chunkfinal.out",
-			seeds=seed_array)
+		output_dir + "/result.out"
 	run: 
-		inputs = expand(output_dir + "/{seeds}/*.trees.seg",
-			seeds=wildcards.seeds)
-		input_file_string = " ".join(inputs)
-		output_file_string = output_dir 
+		inputs = "/1675701734/4.chr2L.trees.seg"
+		#input_file_string = " ".join(inputs)
+		input_file_string = inputs
+		args = {	
+		'EM': 				str(num_smcsmc_iterations),
+		'Np': 				str(num_smcsmc_particles),
+		
+		# Submission Parameters
+		'chunks': 			'100',
+		'c':				'',
+		'no_infer_recomb': 	'',
+
+		# Other inference parameters
+		'mu': 				str(species.genome.mean_mutation_rate),
+		'rho':				'3e-9',
+		'calibrate_lag':	'1.0',
+		'tmax':				'3.5',
+		'alpha': 			'0',
+		'apf': 				'2',
+		'P': 				'133 133016 31*1',
+		'VB':				'',
+		'nsam':				'4', 				# This will need to be changed....
+		
+		# Migration parameters
+		'I':				None,
+		'ej':				None,
+		'eM':				None,
+
+		'smcsmcpath':			'/users/lunter/ccole/repos/smcsmc_noopt/smcsmc',
+
+		# ARG Inference
+		'arg':				None			# Dont need this for now
+		}
+		#output_file_string = output_dir 
 		#args = smcsmc.utils.dict_to_args(smcsmc_params)
-		#args['segs'] = input_file_string
-		#args['o'] = output_file_string
+		args['seg'] = output_dir + input_file_string
+		args['o'] = output_dir
+		args = smcsmc.utils.dict_to_args(args)
 		smcsmc.utils.run_smcsmc(args)	
 
 # ###############################################################################
