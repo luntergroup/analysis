@@ -87,6 +87,7 @@ genetic_map = species.Comeron2012_dm6()
 # like to include in each analysis
 # TODO: Change this to list(species.genome.chromosomes)
 chrm_list = [chrom for chrom in species.genome.chromosomes][:2]
+#chrm_list = ['chr2L']
 
 
 # ###############################################################################
@@ -94,8 +95,8 @@ chrm_list = [chrom for chrom in species.genome.chromosomes][:2]
 # ###############################################################################
 
 
-#seed_array = np.random.random_integers(1,2**31,replicates)
-seed_array=np.array([1675701734])
+seed_array = np.random.random_integers(1,2**31,replicates)
+#seed_array=np.array([1675701734])
 genetic_map_downloaded_flag= ".genetic_map_downloaded"
 msmc_exec = "../extern/msmc/build/msmc"
 stairwayplot_code = "stairwayplot/swarmops.jar"
@@ -301,18 +302,19 @@ rule compound_msmc:
 
 rule ts_to_seg:
 	input: rules.simulation.output
-	output: expand(output_dir + "/{seeds}/{chrms}.trees.seg", chrms=chrm_list, seeds=seed_array)
+	output: output_dir + "/{seeds}/{samps}.{chrms}.trees.seg"
 	run: smcsmc.utils.ts_to_seg(input[0], num_sampled_genomes_smcsmc)
 
 # fuck it im going to hardcode it now
 rule run_smcsmc:
-	input:
-		output_dir + "/1675701734/4.chr2L.trees.seg"
+	input:	
+		expand(output_dir + "/{seeds}/{samps}.{chrms}.trees.seg",
+        		chrms=chrm_list, seeds=seed_array, samps=num_sampled_genomes_msmc)
 	output: 
-		output_dir + "/result.out"
+		output_dir + "/{seeds}/{samps}.result.out"
 	run: 
-		inputs = "/1675701734/4.chr2L.trees.seg"
-		#input_file_string = " ".join(inputs)
+		inputs = "/{seeds}/{samps}.{chrms}.trees.seg"
+		input_file_string = " ".join(inputs)
 		input_file_string = inputs
 		args = {	
 		'EM': 				str(num_smcsmc_iterations),
@@ -350,6 +352,25 @@ rule run_smcsmc:
 		args['o'] = output_dir
 		args = smcsmc.utils.dict_to_args(args)
 		smcsmc.utils.run_smcsmc(args)	
+
+rule convert_smcsmc:
+    input: rules.run_smcsmc.output
+    output: output_dir + "/{seeds}/{samps}.results.out.csv"
+    run: smcsmc.utils.convert_smcsmc_output(input[0], output[0], generation_time = 10)
+
+
+def ne_files_smcsmc(wildcards):
+    return expand(output_dir + "/{seeds}/{samps}.results.out.csv",
+            seeds=seed_array,samps=num_sampled_genomes_smcsmc)
+
+
+
+rule compound_smcsmc:
+    input: ne_files_smcsmc
+    output: output_dir+"/smcsmc_estimated_Ne.png"
+    run: plots.plot_compound_msmc(input, output[0])
+
+
 
 # ###############################################################################
 # 
