@@ -31,6 +31,13 @@ import smcsmc.utils
 # KNOBS - 
 # ###############################################################################
 
+# Certain jobs will need to be run on the head node always. In the absence of the -c flag, 
+# this shouldn't affect anything.
+#
+# The first is because often compute nodes do not have an internet connection, and the second becuase
+# they often do not have the ability to submit jobs to the queue. 
+
+#localrules: download_genetic_map, 
 
 # A seed to replicate results
 # TODO mutation rates
@@ -341,6 +348,7 @@ rule run_smcsmc:
 
 		# Other inference parameters
 		'mu': 				str(species.genome.mean_mutation_rate),
+		'N0':				'14312',
 		'rho':				'3e-9',
 		'calibrate_lag':	'1.0',
 		'tmax':				'3.5',
@@ -380,7 +388,7 @@ def ne_files_smcsmc(wildcards):
 rule compound_smcsmc:
     input: ne_files_smcsmc
     output: output_dir+"/Results/smcsmc_estimated_Ne.png"
-    run: plots.plot_compound_msmc(input, output[0])
+    run: plots.plot_compound_smcsmc_with_guide(input, output[0], model, 30, pop_id=1)
 
 
 

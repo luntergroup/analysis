@@ -59,6 +59,27 @@ def plot_compound_msmc(infiles, outfile):
         ax.plot(nt['x'], nt['y'], c="red")
     f.savefig(outfile, bbox_inches='tight')
 
+def plot_compound_smcsmc_with_guide(infiles, outfile, model, generation_time, pop_id = 0, steps = None, drawstyle = 'steps-pre'):
+    ddb = msprime.DemographyDebugger(**model.asdict())
+    if steps is None:
+        end_time = ddb.epochs[-2].end_time + 10000
+        steps = np.exp(np.linspace(1,np.log(end_time),1000))
+    num_samples = [0 for _ in range(ddb.num_populations)]
+    num_samples[pop_id] = 20
+    coal_rate, P = ddb.coalescence_rate_trajectory(steps=steps,
+        num_samples=num_samples, double_step_validation=False)
+    steps = steps * generation_time
+
+    f, ax = plt.subplots(figsize=(7, 7))
+    ax.set(xscale="log", yscale="log")
+    for infile in infiles:
+        nt = pandas.read_csv(infile, usecols=[1, 2], skiprows=0)
+        ax.plot(nt['x'], nt['y'], c="red", drawstyle=drawstyle)
+
+    ax.plot(steps, 1/(2*coal_rate), c="black", drawstyle = drawstyle)
+
+    f.savefig(outfile, bbox_inches='tight')
+
 
 def plot_all_ne_estimates(sp_infiles, smcpp_infiles, msmc_infiles, outfile,
                             model, n_samp, generation_time, species,
