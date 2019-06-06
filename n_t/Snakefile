@@ -82,7 +82,7 @@ num_smcsmc_particles = config["num_smcsmc_particles"]
 replicates = config["replicates"]
 
 # Where you would like all output files from analysis to live
-output_dir = config["config"]
+output_dir = config["output_dir"]
 
 # The analysis species
 species = getattr(stdpopsim,config["species"])
