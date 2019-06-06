@@ -388,7 +388,7 @@ def ne_files_smcsmc(wildcards):
 rule compound_smcsmc:
     input: ne_files_smcsmc
     output: output_dir+"/Results/smcsmc_estimated_Ne.png"
-    run: plots.plot_compound_smcsmc_with_guide(input, output[0], model, 30, pop_id=1)
+    run: plots.plot_compound_smcsmc_with_guide(input, output[0], 30, 1, model=model)
 
 
 
