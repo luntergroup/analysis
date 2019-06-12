@@ -24,7 +24,6 @@ import msmc
 import simulations
 import plots
 import smcsmc
-import smcsmc.utils
 
 
 # ###############################################################################
@@ -303,24 +302,6 @@ rule compound_msmc:
 #  SMCSMC
 # ###############################################################################
 
-# NOTE: I am just using *one* sample in the list for now. I will figure out how to expand it out
-# 		once this is actually working.
-
-# Some SMCSMC specific parameters
-# 	This dictionary gets converted to a list which is 
-# 	analagous to inputting these on the command line to 
-# 	smcsmc.py, so use the exact same keys. Please see the documentation
-#	for details on these flags.
-#
-#	Anything which has the value True will be included as a boolean
-#	and the True will be stripped, leaving just the key as the input.
-#	False will be removed.
-#
-# TODO: Make this cleaner, and don't have to process the whole
-# 		thing as if it is input arguements.
-
-
-
 rule ts_to_seg:
 	input: rules.simulation.output
 	output: output_dir + "/Intermediate/{seeds}/{samps}.{chrms}.trees.seg"
@@ -335,50 +316,45 @@ rule run_smcsmc:
 	run: 
 		inputs = expand(output_dir+"/Intermediate/{seeds}/{samps}.{chrms}.trees.seg", 
 			seeds=wildcards.seeds, samps=wildcards.samps, chrms=chrm_list)
+		
 		input_file_string = " ".join(inputs)
-		#input_file_string = inputs
+
+		# This coudl also be saved externally in a JSON but 
+		# I thought it best to keep it all together for now.
 		args = {	
-		'EM': 				str(num_smcsmc_iterations),
-		'Np': 				str(num_smcsmc_particles),
-		
-		# Submission Parameters
-		'chunks': 			'100',
-		'c':				'',
-		'no_infer_recomb': 	'',
+			'EM': 				str(num_smcsmc_iterations),
+			'Np': 				str(num_smcsmc_particles),
+			
+			# Submission Parameters
+			'chunks': 			'100',
+			'c':				'',
+			'no_infer_recomb': 	'',
 
-		# Other inference parameters
-		'mu': 				str(species.genome.mean_mutation_rate),
-		'N0':				'14312',
-		'rho':				'3e-9',
-		'calibrate_lag':	'1.0',
-		'tmax':				'3.5',
-		'alpha': 			'0',
-		'apf': 				'2',
-		'P': 				'133 133016 31*1',
-		'VB':				'',
-		'nsam':				'4', 				# This will need to be changed....
-		
-		# Migration parameters
-		'I':				None,
-		'ej':				None,
-		'eM':				None,
+			# Other inference parameters
+			'mu': 				str(species.genome.mean_mutation_rate),
+			'N0':				'14312',
+			'rho':				'3e-9',
+			'calibrate_lag':	'1.0',
+			'tmax':				'3.5',
+			'alpha': 			'0',
+			'apf': 				'2',
+			'P': 				'133 133016 31*1',
+			'VB':				'',
+			'nsam':				str(wildcards.samps),		
 
-		'smcsmcpath':			'/users/lunter/ccole/repos/smcsmc_noopt/smcsmc',
-
-		# ARG Inference
-		'arg':				None			# Dont need this for now
+			# This should be in the conda bin
+			'smcsmcpath':			'smcsmc',
 		}
-		#output_file_string = output_dir 
-		#args = smcsmc.utils.dict_to_args(smcsmc_params)
+		
 		args['o'] = output_dir + f"/Intermediate/{wildcards.seeds}/{wildcards.samps}.run"
 		args['segs'] = input_file_string
-		args = smcsmc.utils.dict_to_args(args)
+		
 		smcsmc.utils.run_smcsmc(args)	
 
 rule convert_smcsmc:
     input: rules.run_smcsmc.output
     output: output_dir + "/Results/{seeds}/{samps}.run/results.out.csv"
-    run: smcsmc.utils.convert_smcsmc_output(input[0], output[0], generation_time, num_smcsmc_iterations)
+    run: smcsmc.popsim.convert_smcsmc_output(input[0], output[0], generation_time, num_smcsmc_iterations)
 
 
 def ne_files_smcsmc(wildcards):
@@ -402,6 +378,7 @@ rule all_plot:
         f1 = ne_files,
         f2 = ne_files_smcpp,
         f3 = ne_files_msmc,
+	f4 = ne_files_smcsmc,
     output:
         output_dir + "/Results/all_estimated_Ne.pdf"
     run: 

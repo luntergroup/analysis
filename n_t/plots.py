@@ -87,7 +87,7 @@ def plot_compound_smcsmc_with_guide(infiles, outfile, generation_time, pop_id = 
     f.savefig(outfile, bbox_inches='tight')
 
 
-def plot_all_ne_estimates(sp_infiles, smcpp_infiles, msmc_infiles, outfile,
+def plot_all_ne_estimates(sp_infiles, smcpp_infiles, msmc_infiles, smcsmc_infiles, outfile,
                             model, n_samp, generation_time, species,
                             pop_id = 0, steps=None):
 
@@ -100,9 +100,14 @@ def plot_all_ne_estimates(sp_infiles, smcpp_infiles, msmc_infiles, outfile,
     coal_rate, P = ddb.coalescence_rate_trajectory(steps=steps,
         num_samples=num_samples, double_step_validation=False)
     steps = steps * generation_time
+
     num_msmc = set([os.path.basename(infile).split(".")[0] for infile in msmc_infiles])
+    num_smcsmc = set([os.path.basename(infile).split(".")[0] for infile in smcsmc_infiles])
+
     num_msmc = sorted([int(x) for x in num_msmc])
-    f, ax = plt.subplots(1,2+len(num_msmc),sharex=True,sharey=True,figsize=(14, 7))
+    num_smcsmc = sorted([int(x) for x in num_msmc])
+
+    f, ax = plt.subplots(1,2+len(num_msmc) + len(num_smcsmc), sharex=True,sharey=True,figsize=(14, 7))
     for infile in smcpp_infiles:
         nt = pandas.read_csv(infile, usecols=[1, 2], skiprows=0)
         line1, = ax[0].plot(nt['x'], nt['y'], alpha=0.8)
@@ -113,6 +118,7 @@ def plot_all_ne_estimates(sp_infiles, smcpp_infiles, msmc_infiles, outfile,
         line2, = ax[1].plot(nt['year'], nt['Ne_median'],alpha=0.8)
     ax[1].plot(steps, 1/(2*coal_rate), c="black")
     ax[1].set_title("stairwayplot")
+
     for i,sample_size in enumerate(num_msmc):
         for infile in msmc_infiles:
             fn = os.path.basename(infile)
@@ -126,6 +132,22 @@ def plot_all_ne_estimates(sp_infiles, smcpp_infiles, msmc_infiles, outfile,
     for i in range(2+len(num_msmc)):
         ax[i].set(xscale="log", yscale="log")
         ax[i].set_xlabel("time (years ago)")
+
+    for i,sample_size in enumerate(num_smcsmc):
+        for infile in smcsmc_infiles:
+            fn = os.path.basename(infile)
+            samp = fn.split(".")[0]
+            if(int(samp) == sample_size):
+                nt = pandas.read_csv(infile, usecols=[1, 2], skiprows=0)
+                line3, = ax[2+len(num_msmc) + i].plot(nt['x'], nt['y'],alpha=0.8)
+        ax[2+i].plot(steps, 1/(2*coal_rate), c="black")
+        ax[2+i].set_title(f"smcsmc, ({sample_size} samples)")
+    plt.suptitle(f"{species}, population id {pop_id}", fontsize = 16)
+    for i in range(2+len(num_msmc)):
+        ax[i].set(xscale="log", yscale="log")
+        ax[i].set_xlabel("time (years ago)")
+
+
     red_patch = mpatches.Patch(color='black', label='Coalescence rate derived Ne')
     ax[0].legend(frameon=False, fontsize=10, handles=[red_patch])
     ax[0].set_ylabel("population size")
