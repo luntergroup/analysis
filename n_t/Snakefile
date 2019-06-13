@@ -343,13 +343,13 @@ rule run_smcsmc:
 			'nsam':				str(wildcards.samps),		
 
 			# This should be in the conda bin
-			'smcsmcpath':			'smcsmc',
+			'smcsmcpath':			os.path.expandvars('${CONDA_PREFIX}/bin/smcsmc'),
 		}
 		
 		args['o'] = output_dir + f"/Intermediate/{wildcards.seeds}/{wildcards.samps}.run"
 		args['segs'] = input_file_string
 		
-		smcsmc.utils.run_smcsmc(args)	
+		smcsmc.run_smcsmc(args)	
 
 rule convert_smcsmc:
     input: rules.run_smcsmc.output
@@ -382,7 +382,7 @@ rule all_plot:
     output:
         output_dir + "/Results/all_estimated_Ne.pdf"
     run: 
-        plots.plot_all_ne_estimates(input.f1, input.f2, input.f3, input.f4 output[0],
+        plots.plot_all_ne_estimates(input.f1, input.f2, input.f3, input.f4, output[0],
                     model=model, n_samp=num_sampled_genomes_per_replicate,
                     generation_time=generation_time, species=config["species"],
                     pop_id=population_id)
