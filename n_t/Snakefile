@@ -24,6 +24,7 @@ import msmc
 import simulations
 import plots
 import smcsmc
+import smcsmc.popsim
 
 
 # ###############################################################################
@@ -359,12 +360,16 @@ rule convert_smcsmc:
 
 def ne_files_smcsmc(wildcards):
     return expand(output_dir + "/Results/{seeds}/{samps}.run/results.out.csv",
-            seeds=seed_array,samps=num_sampled_genomes_smcsmc)
+            seeds=seed_array)
+
+rule plot_by_sample:
+    input: expand(output_dir + "/Results/{seeds}/{{samps}}.run/results.out.csv", seeds=seed_array)
+    output: output_dir+"/Results/smcsmc_estimated_Ne_{samps}.png"
+    run: 
+    	plots.plot_compound_smcsmc_with_guide(input, output[0], 30, 1, nhaps ={wildcards.samps}, model = model)
 
 rule compound_smcsmc:
-    input: ne_files_smcsmc
-    output: output_dir+"/Results/smcsmc_estimated_Ne.png"
-    run: plots.plot_compound_smcsmc_with_guide(input, output[0], 30, 1, model=model)
+    input: expand(output_dir+"/Results/smcsmc_estimated_Ne_{samps}.png", samps = num_sampled_genomes_smcsmc)
 
 
 

@@ -60,7 +60,7 @@ def plot_compound_msmc(infiles, outfile):
         ax.plot(nt['x'], nt['y'], c="red")
     f.savefig(outfile, bbox_inches='tight')
 
-def plot_compound_smcsmc_with_guide(infiles, outfile, generation_time, pop_id = 0,model = None, steps = None):         
+def plot_compound_smcsmc_with_guide(infiles, outfile, generation_time, pop_id = 0, nhaps = 1, model = None, steps = None):         
     f, ax = plt.subplots(figsize=(7, 7))
     ax.set(xscale="log", yscale="log")
 
@@ -83,6 +83,12 @@ def plot_compound_smcsmc_with_guide(infiles, outfile, generation_time, pop_id = 
     for infile in infiles:
         nt = pandas.read_csv(infile, usecols=[1, 2], skiprows=0)
         ax.step(nt['x'], nt['y'], c="red")
+
+    ax.set_ylim([1e3,1e6])
+    ax.set_xlabel('Years before present')
+    ax.set_ylabel('Effective population size')
+    h_string = "".join(nhaps)
+    ax.set_title(f"SMCSMC Estimated Ne ({h_string} samples)")
 
     f.savefig(outfile, bbox_inches='tight')
 
