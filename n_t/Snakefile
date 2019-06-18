@@ -95,12 +95,11 @@ model = model_class()
 genetic_map_class = getattr(species,config["genetic_map"])
 genetic_map = genetic_map_class()
 
-# A list containing the names all simulated chromosomes you would 
-# like to include in each analysis
-# TODO: Change this to list(species.genome.chromosomes)
+# The names of all chromosomes to simulate, separated by commas
+# Use "all" to simulate all chromsomes for the genome
 chrm_list = [chrom for chrom in species.genome.chromosomes]
 if(config["chrm_list"] != "all"):
-    chrm_list = chrm_list[:config["chrm_list"]]
+    chrm_list = [chr for chr in config["chrm_list"].split(",")]
 
 # For plotting
 generation_time = config["generation_time"]
@@ -177,7 +176,7 @@ rule run_stairwayplot:
         stairwayplot_code,
     output: output_dir + "/Results/{seeds}/stairwayplot_estimated_Ne.txt"
     threads: 20
-    run: 
+    run:
         inputs = expand(output_dir + "/Intermediate/{seeds}/{chrms}.trees",
             seeds=wildcards.seeds, chrms=chrm_list)
         runner = stairway.StairwayPlotRunner(

@@ -42,16 +42,16 @@ might look like this:
 	"population_id" : 0,
 	"num_sampled_genomes_per_replicate" : 20,
 	"num_sampled_genomes_msmc" : "2 8",
-	"num_sampled_genomes_smcsmc" : "4",
+	"num_sampled_genomes_smcsmc" : "2 4",
 	"num_smcsmc_particles": 10000,
 	"num_msmc_iterations" : 20,
 	"num_smcsmc_iterations": 15,
-	"replicates" : 1,
+	"replicates" : 10,
 	"species" : "homo_sapiens",
 	"model" : "GutenkunstThreePopOutOfAfrica",
 	"genetic_map" : "HapmapII_GRCh37",
-	"chrm_list" : "all",
-	"generation_time" : 30,
+	"chrm_list" : "chr22,chrX",
+	"generation_time" : 25,
 	"output_dir": "output"
 }
 
@@ -149,7 +149,8 @@ should inherit from `<class Model>`
 `genetic_map` : `<class childclass GeneticMap>` This will define the genetic map
 used for simulations.
 
-`chrm_list` : `<class 'list[str]'>` The chromosomes you would like to simulate
-for input into each of the analysis run. All chromosomes simulated will be fed
+`chrm_list` : `<class 'str'>` A string of the chromosome names you would like to simulate,
+separated by commas. All chromosomes simulated will be fed
 as a single input into each analysis by the inference programs, for each replicate.
+Set to "all" to simulate all chromsomes for the genome.
 
