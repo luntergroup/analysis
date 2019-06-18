@@ -35,14 +35,14 @@ cat msmc_makefile_stdpopsim_patch > msmc/Makefile && cd msmc && make
 cd ../../
 ```
 
-> Note that I have not uploaded the conda package smcsmc-core or pip package smcsmc, and they are both local to me right now. So for that reason I haven't included it in the requirements.txt until it is actually live.)
+> `smcsmc` is not up on `conda` just yet, but it will be very soon.
 
-For using SMCSMC we need to install both the python front end and the C++ backend. The recomended installing route is
+For using SMCSMC we need to install both the python API and the C++ backend. The recomended installing route is
 
 ```sh
 conda install -c terhorst smcsmc 
 ```
 
-which installs the SMCMSC binary (`smcsmc-core`) and the python package called `smcsmc` along with dependencies. 
+which installs the SMCMSC binary (`smcsmc`) and the python package called `smcsmc`. 
 
 Further instructions can be currently found in each task directory
