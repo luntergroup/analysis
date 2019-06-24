@@ -18,10 +18,10 @@ moment.
 
 ## Workflow
 
-The analysis includes three programs for predicting effective population 
+The analysis includes four programs for predicting effective population 
 size through time(`n_t`): 
 [msmc](https://github.com/stschiff/msmc/issues/23),
-[stairwayplot](https://sites.google.com/site/jpopgen/stairway-plot), smcsmc, and
+[stairwayplot](https://sites.google.com/site/jpopgen/stairway-plot), [smcsmc](https://github.com/luntergroup/smcsmc), and
 [smc++](https://github.com/popgenmethods/smcpp).
 There are five target rules that can be executed with the given parameters: 
 `compound_msmc`,
