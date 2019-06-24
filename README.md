@@ -35,14 +35,10 @@ cat msmc_makefile_stdpopsim_patch > msmc/Makefile && cd msmc && make
 cd ../../
 ```
 
-> `smcsmc` is not up on `conda` just yet, but it will be very soon.
-
-For using SMCSMC we need to install both the python API and the C++ backend. The recomended installing route is
+`smcsmc` can be [installed manually](https://github.com/luntergroup/smcsmc) or through `conda` on linux. 
 
 ```sh
-conda install -c terhorst smcsmc 
+conda install -c luntergroup smcsmc 
 ```
-
-which installs the SMCMSC binary (`smcsmc`) and the python package called `smcsmc`. 
 
 Further instructions can be currently found in each task directory
