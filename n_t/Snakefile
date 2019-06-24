@@ -31,14 +31,6 @@ import smcsmc.popsim
 # KNOBS - 
 # ###############################################################################
 
-# Certain jobs will need to be run on the head node always. In the absence of the -c flag, 
-# this shouldn't affect anything.
-#
-# The first is because often compute nodes do not have an internet connection, and the second becuase
-# they often do not have the ability to submit jobs to the queue. 
-
-#localrules: download_genetic_map, 
-
 # A seed to replicate results
 # TODO mutation rates
 
@@ -318,34 +310,27 @@ rule run_smcsmc:
 			seeds=wildcards.seeds, samps=wildcards.samps, chrms=chrm_list)
 		
 		input_file_string = " ".join(inputs)
-
-		# This coudl also be saved externally in a JSON but 
-		# I thought it best to keep it all together for now.
 		args = {	
-			'EM': 				str(num_smcsmc_iterations),
-			'Np': 				str(num_smcsmc_particles),
-			
+			'EM': str(num_smcsmc_iterations),
+			'Np': str(num_smcsmc_particles),	
 			# Submission Parameters
-			'chunks': 			'100',
-			'c':				'',
-			'no_infer_recomb': 	'',
-
+			'chunks': '100',
+			'c': '',
+			'no_infer_recomb': '',
 			# Other inference parameters
-			'mu': 				str(species.genome.mean_mutation_rate),
-			'N0':				'14312',
-			'rho':				'3e-9',
-			'calibrate_lag':	'1.0',
-			'tmax':				'3.5',
-			'alpha': 			'0',
-			'apf': 				'2',
-			'P': 				'133 133016 31*1',
-			'VB':				'',
-			'nsam':				str(wildcards.samps),		
-
+			'mu': str(species.genome.mean_mutation_rate),
+			'N0': '14312',
+			'rho': '3e-9',
+			'calibrate_lag': '1.0',
+			'tmax':	'3.5',
+			'alpha': '0',
+			'apf': '2',
+			'P': '133 133016 31*1',
+			'VB': '',
+			'nsam':	str(wildcards.samps),		
 			# This should be in the conda bin
-			'smcsmcpath':			os.path.expandvars('${CONDA_PREFIX}/bin/smcsmc'),
+			'smcsmcpath': os.path.expandvars('${CONDA_PREFIX}/bin/smcsmc')
 		}
-		
 		args['o'] = output_dir + f"/Intermediate/{wildcards.seeds}/{wildcards.samps}.run"
 		args['segs'] = input_file_string
 		
